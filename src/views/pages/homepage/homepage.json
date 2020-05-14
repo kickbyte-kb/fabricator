@@ -1,0 +1,16 @@
+{
+  "title": "homepage",
+  "js": "main.js",
+  "css": "main.css",
+  "bodyClass": "",
+  "mainClass": "",
+  "documentation": "",
+  "content": [
+    {
+      "partial": "homepage",
+      "data": {
+        "title": "homepage"
+      }
+    }
+  ]
+}

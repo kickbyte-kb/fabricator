@@ -48,7 +48,6 @@
     "eslint-config-prettier": "^3.3.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-prettier": "^3.0.0",
-    "fabricator-assemble": "^1.4.0",
     "fancy-log": "^1.3.2",
     "gulp": "^4.0.0",
     "gulp-autoprefixer": "^6.0.0",
@@ -64,7 +63,11 @@
     "webpack": "^4.26.0"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.0.0"
+    "@babel/polyfill": "^7.0.0",
+    "fabricator-assemble": "file:fabricator-assemble",
+    "handlebars": "^4.7.6",
+    "js-beautify": "^1.11.0",
+    "lodash": "^4.17.15"
   },
   "optionalDependencies": {}
 }

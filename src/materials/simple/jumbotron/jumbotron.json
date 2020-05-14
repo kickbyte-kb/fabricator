@@ -1,0 +1,17 @@
+{
+  "title": "jumbotron",
+  "js": "main.js",
+  "css": "main.css",
+  "bodyClass": "",
+  "documentation": "Lightweight, flexible component for showcasing hero unit style content.",
+  "mainClass": "",
+  "variations": [
+    {
+      "partial": "jumbotron",
+      "data": {
+        "text": "jumbotron",
+        "cssVariation": ""
+      }
+    }
+  ]
+}

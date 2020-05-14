@@ -1,3 +1,7 @@
+---
+style: homeSendInStyle
+---
+
 <h1>Hello, World!</h1>
 
 {{> paragraph}}
@@ -5,3 +9,12 @@
 <div>
 	{{> form}}
 </div>
+<span>{{buttonData.test}}</span>
+<span>{{this.button.test}}</span>
+{{> button }}
+{{> button style=style}}
+{{> button style=button.style}}
+
+{{#each button.data.styles}}
+	{{> button style=this}}
+{{/each}}

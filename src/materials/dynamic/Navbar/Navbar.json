@@ -1,0 +1,16 @@
+{
+  "title": "Navbar",
+  "js": "main.js",
+  "css": "main.css",
+  "bodyClass": "",
+  "mainClass": "",
+  "variations": [
+    {
+      "partial": "Navbar",
+      "data": {
+        "text": "Navbar",
+        "cssVariation": ""
+      }
+    }
+  ]
+}

@@ -190,6 +190,40 @@ function assembler(done) {
       mod: function mod(a, b) {
         return +a % +b;
       },
+      json: function json(context) {
+        return JSON.stringify(context, null, 1);
+      },
+      toString: function toString(array) {
+        if(Array.isArray(array)) {
+          return array.join(", ");
+        } else if(array instanceof Object) {
+          return Object.values(array);
+        } else if(array instanceof String) {
+          return array;
+        }
+      },
+      atIndex: function atIndex(array, index) {
+        if(Array.isArray(array)) {
+          return array[index];
+        } else {
+          return "Error: object is not an array";
+        }
+      },
+      eachData: function eachData(context, options) {
+        var fn = options.fn, inverse = options.inverse, ctx;
+        var ret = "";
+  
+        if(context && context.length > 0) {
+          for(var i=0, j=context.length; i<j; i++) {
+            ctx = Object.create(context[i]);
+            ctx.index = i;
+            ret = ret + fn(ctx);
+          }
+        } else {
+          ret = inverse(this);
+        }
+        return ret;
+      },
     },
   });
   done();
