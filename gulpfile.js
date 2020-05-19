@@ -36,12 +36,12 @@ const config = {
     fabricator: {
       src: 'src/assets/fabricator/styles/fabricator.scss',
       dest: 'dist/assets/fabricator/styles',
-      watch: 'src/assets/fabricator/styles/**/*.scss',
+      watch: 'src/assets/fabricator/styles/**/*',
     },
     toolkit: {
-      src: 'src/assets/toolkit/styles/toolkit.scss',
-      dest: 'dist/assets/toolkit/styles',
-      watch: 'src/assets/toolkit/styles/**/*.scss',
+      src: 'src/assets/scss/*',
+      dest: 'dist/assets/css',
+      watch: 'src/assets/scss/*',
     },
   },
   scripts: {
@@ -51,20 +51,20 @@ const config = {
       watch: 'src/assets/fabricator/scripts/**/*',
     },
     toolkit: {
-      src: './src/assets/toolkit/scripts/toolkit.js',
-      dest: 'dist/assets/toolkit/scripts',
-      watch: 'src/assets/toolkit/scripts/**/*',
+      src: './src/assets/js/main.js',
+      dest: 'dist/assets/scripts',
+      watch: 'src/assets/js/*',
     },
   },
   images: {
     toolkit: {
-      src: ['src/assets/toolkit/images/**/*', 'src/favicon.ico'],
-      dest: 'dist/assets/toolkit/images',
-      watch: 'src/assets/toolkit/images/**/*',
+      src: ['src/assets/images/**/*', 'src/favicon.ico'],
+      dest: 'dist/assets/images',
+      watch: 'src/assets/images/**/*',
     },
   },
   templates: {
-    watch: 'src/**/*.{html,md,json,yml}',
+    watch: ['src/**/**/*.{html,md,json,yml}', 'src/**/*.{html,md,json,yml}'],
   },
   dest: 'dist',
 };
@@ -136,6 +136,9 @@ const images = gulp.series(imgFavicon, imgMinification);
 // assembly
 function assembler(done) {
   fabAssemble({
+    materials: ['src/materials/**/*.html', 'src/materials/**/**/*.handlebars'],
+    data: ['src/materials/**/**/*.json', 'src/data/*.yml'],
+    docs: ['src/materials/**/**/*.md'],
     logErrors: config.dev,
     dest: config.dest,
     helpers: {

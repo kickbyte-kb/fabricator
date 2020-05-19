@@ -43,7 +43,7 @@ module.exports = ({
     mode: dev ? 'development' : 'production',
     entry: {
       'fabricator/scripts/f': fabSrc,
-      'toolkit/scripts/toolkit': scriptSrc,
+      'js/main': scriptSrc,
     },
     output: {
       path: path.resolve(__dirname, dest, 'assets'),

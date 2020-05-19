@@ -1,15 +1,3 @@
 {
-  "title": "Modal",
-  "js": "main.js",
-  "css": "main.css",
-  "bodyClass": "",
-  "mainClass": "",
-  "content": [
-    {
-      "partial": "Modal",
-      "data": {
-        "title": "Modal"
-      }
-    }
-  ]
+  "title": "Modal Test title"
 }
