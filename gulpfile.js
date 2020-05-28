@@ -136,6 +136,9 @@ const images = gulp.series(imgFavicon, imgMinification);
 // assembly
 function assembler(done) {
   fabAssemble({
+    views: ['src/views/**/*', '!src/views/+(layouts)/**'], // pages
+    // layouts: ['src/views/layouts/*'],
+    // layoutIncludes: ['src/material/views/includes/*'],
     materials: ['src/materials/**/*.html', 'src/materials/**/**/*.handlebars'],
     data: ['src/materials/**/**/*.json', 'src/data/*.yml'],
     docs: ['src/materials/**/**/*.md'],

@@ -10,5 +10,14 @@
 		<svg>
 			<use xlink:href="#f-icon-code" />
 		</svg>
+	</span>	
+	{{#if link}}
+	<span class="f-control f-icon" data-f-toggle-control="link" title="Dev Link">
+		<a href="{{link}}">
+		<svg>
+			<use xlink:href="#f-icon-link" />
+		</svg>
+	</a>
 	</span>
+	{{/if}}
 </div>
