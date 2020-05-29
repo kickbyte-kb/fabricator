@@ -67,6 +67,17 @@ const config = {
   templates: {
     watch: ['src/**/**/*.{html,md,json,yml,handlebars,html}', 'src/**/*.{html,md,json,yml,handlebars,html}'],
   },
+  materials: function (ext) {
+    return [
+      `src/base/*.{${ext}}`,
+      `src/simple/*.{${ext}}`,
+      `src/compound/*.{${ext}}`,
+      `src/dynamic/*.{${ext}}`,
+      `src/base/**/*.{${ext}}`,
+      `src/simple/**/*.{${ext}}`,
+      `src/compound/**/*.{${ext}}`,
+      `src/dynamic/**/*.{${ext}}`]
+  },
   dest: 'dist',
 };
 
@@ -137,12 +148,12 @@ const images = gulp.series(imgFavicon, imgMinification);
 // assembly
 function assembler(done) {
   fabAssemble({
-    views: ['src/views/**/*', '!src/views/+(layouts)/**'], // pages
-    // layouts: ['src/views/layouts/*'],
-    // layoutIncludes: ['src/material/views/includes/*'],
-    materials: ['src/materials/**/*.html', 'src/materials/**/**/*.handlebars'],
-    data: ['src/materials/**/**/*.json', 'src/data/*.yml'],
-    docs: ['src/materials/**/**/*.md'],
+    // views: ['src/page/*'], // pages
+    // layouts: ['src/layouts/*'],
+    // layoutIncludes: ['src/layouts/includes/*'],
+    materials: config.materials("html,handlebars"),
+    data: ['src/assets/data/*.yml', ...config.materials("json,yml")],
+    docs: config.materials("md"),
     logErrors: config.dev,
     dest: config.dest,
     helpers: {

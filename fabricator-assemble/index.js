@@ -25,6 +25,12 @@ var defaults = {
 	 */
 	layout: 'default',
 
+		/**
+	 * ID (filename) of default dev layout
+	 * @type {String}
+	 */
+	devlayout: 'dev',
+
 	/**
 	 * Layout templates
 	 * @type {(String|Array)}
@@ -331,7 +337,7 @@ var parseMaterials = function () {
 	files.forEach(function (file) {
 
 		var parent = getName(path.normalize(path.dirname(file)).split(path.sep).slice(-2, -1)[0], true);
-		var collection = getName(path.normalize(path.dirname(file)).split(path.sep).pop(), true);
+		var collection = getName(path.normalize(path.dirname(file)).split(path.sep)[1], true);
 		var isSubCollection = (dirs.indexOf(parent) > -1);
 
 		// get the material base dir for stubbing out the base object for each category (e.g. component, structure)
@@ -361,13 +367,13 @@ var parseMaterials = function () {
 		// Prevent partials from showing up like Modal.Modal
 		// var collection = getName(path.normalize(path.dirname(file)).split(path.sep).pop(), true);
 		// var isSubCollection = (dirs.indexOf(parent) > -1);
-		var collection = getName(path.normalize(path.dirname(file)).split(path.sep)[2], true);
+		var collection = getName(path.normalize(path.dirname(file)).split(path.sep)[1], true);
 		var isSubCollection = false; 
 		var id = (isSubCollection) ? getName(collection) + '.' + getName(file) : getName(file);
 		var key = (isSubCollection) ? collection + '.' + getName(file, true) : getName(file, true);
 
 		// build filePath
-		var dirname = path.normalize(path.dirname(file)).split(path.sep)[2],
+		var dirname = path.normalize(path.dirname(file)).split(path.sep)[1],
 		collectionLink = (dirname !== options.keys.views) ? dirname : '',
 		urlPath = dirname + "/" + path.basename(file).replace(/\.[0-9a-z]+$/, ".html");
 
@@ -397,7 +403,9 @@ var parseMaterials = function () {
 
 		// store material-name-spaced local data in template context
 		if(Object.keys(localData).length !== 0 && localData.constructor === Object) {
-			// assembly.materialData[id.replace(/\./g, '-')] = localData;
+			if(assembly.data[id.replace(/\./g, '-')] === undefined) {
+				assembly.data[id.replace(/\./g, '-')] = {};
+			}
 			Object.assign(assembly.data[id.replace(/\./g, '-')], localData);
 		}
 
@@ -732,7 +740,7 @@ var dev = function () {
 		var id = getName(file);
 
 		// build filePath
-		var dirname = path.normalize(path.dirname(file)).split(path.sep)[2],
+		var dirname = path.normalize(path.dirname(file)).split(path.sep)[1],
 			collection = (dirname !== options.keys.views) ? dirname : '',
 			filePath = path.normalize(path.join(options.dest, collection, path.basename(file)));
 
@@ -761,12 +769,11 @@ var dev = function () {
 		if(options.baseUrl && options.baseUrl.length > 0) {
 			pageMatter.data.baseurl = options.baseUrl;
 		}
-
+		pageMatter.data.guideurl = `/${dirname}.html#${id}`;
 		pageMatter.data.GLOBAL = options.GLOBAL;
 
 		// template using Handlebars
-		var layout = pageMatter.data.layout || options.layout;
-		layout = jsonMatter && jsonMatter.variations ? "dev" : layout;
+		var layout = pageMatter.data.layout || options.devlayout;
 		var source = wrapPage(pageContent, assembly.layouts[layout]),
 			context = buildContext(pageMatter.data),
 			template = Handlebars.compile(source);
