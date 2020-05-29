@@ -299,7 +299,7 @@ var toTitleCase = function(str) {
  * @return {String}
  */
 var wrapPage = function (page, layout) {
-	return layout.replace(/\{\%\s?body\s?\%\}/, page);
+	return layout.replace(/\{\%\s?body\s?\%\}/g, page);
 };
 
 
@@ -326,6 +326,7 @@ var parseMaterials = function () {
 		return path.normalize(dir).split(path.sep).slice(-2, -1)[0];
 	});
 
+	//TODO investigate this - its using isSubCollection to do work
 	// stub out an object for each collection and subCollection
 	files.forEach(function (file) {
 
@@ -354,20 +355,21 @@ var parseMaterials = function () {
 
 	// iterate over each file (material)
 	files.forEach(function (file) {
-
 		// get info
 		var fileMatter = getMatter(file);
-		var collection = getName(path.normalize(path.dirname(file)).split(path.sep).pop(), true);
 		var parent = path.normalize(path.dirname(file)).split(path.sep).slice(-2, -1)[0];
-		var isSubCollection = (dirs.indexOf(parent) > -1);
+		// Prevent partials from showing up like Modal.Modal
+		// var collection = getName(path.normalize(path.dirname(file)).split(path.sep).pop(), true);
+		// var isSubCollection = (dirs.indexOf(parent) > -1);
+		var collection = getName(path.normalize(path.dirname(file)).split(path.sep)[2], true);
+		var isSubCollection = false; 
 		var id = (isSubCollection) ? getName(collection) + '.' + getName(file) : getName(file);
-		// TODO prevent partials from showing up like Modal.Modal
 		var key = (isSubCollection) ? collection + '.' + getName(file, true) : getName(file, true);
 
 		// build filePath
 		var dirname = path.normalize(path.dirname(file)).split(path.sep)[2],
 		collectionLink = (dirname !== options.keys.views) ? dirname : '',
-		filePath = path.normalize(path.join(collectionLink, path.basename(file).replace(/\.[0-9a-z]+$/, options.extension)));
+		urlPath = dirname + "/" + path.basename(file).replace(/\.[0-9a-z]+$/, ".html");
 
 		// get material front-matter, omit `notes`
 		var localData = _.omit(fileMatter.data, 'notes');
@@ -379,14 +381,14 @@ var parseMaterials = function () {
 		if (!isSubCollection) {
 			assembly.materials[collection].items[key] = {
 				name: toTitleCase(id),
-				link: filePath,
+				url: urlPath,
 				notes: (fileMatter.data.notes) ? md.render(fileMatter.data.notes) : '',
 				data: localData
 			};
 		} else {
 			assembly.materials[parent].items[collection].items[key] = {
 				name: toTitleCase(id.split('.')[1]),
-				link: filePath,
+				url: urlPath,
 				notes: (fileMatter.data.notes) ? md.render(fileMatter.data.notes) : '',
 				data: localData
 			};
@@ -394,8 +396,10 @@ var parseMaterials = function () {
 
 
 		// store material-name-spaced local data in template context
-		assembly.materialData[id.replace(/\./g, '-')] = localData;
-
+		if(Object.keys(localData).length !== 0 && localData.constructor === Object) {
+			// assembly.materialData[id.replace(/\./g, '-')] = localData;
+			Object.assign(assembly.data[id.replace(/\./g, '-')], localData);
+		}
 
 		// replace local fields on the fly with name-spaced keys
 		// this allows partials to use local front-matter data
@@ -624,7 +628,7 @@ var registerHelpers = function () {
  * Setup the assembly
  * @param  {Objet} options  User options
  */
-var setup = function (userOptions) {
+var setup = function (userOptions, isDev) {
 
 	// merge user options with defaults
 	options = _.merge({}, defaults, userOptions);
@@ -714,9 +718,8 @@ var assemble = function () {
 
 };
 
-
+//create individual dev pages
 var dev = function () {
-
 	// get files
 	var files = globby.sync(options.materials, { nodir: true });
 
@@ -737,6 +740,20 @@ var dev = function () {
 		var pageMatter = getMatter(file),
 			pageContent = pageMatter.content;
 
+		var jsonMatter = assembly.data[path.basename(file).replace(/\.[0-9a-z]+$/, "")];
+
+		// if json file exsits add front matter to the json variations
+		if(jsonMatter && jsonMatter.variations) {
+			if(pageMatter.data.themes) {
+				jsonMatter.variations = [pageMatter.data, ...jsonMatter.variations];
+				pageMatter.data.themes.forEach(function (theme) {
+					pageMatter.data.theme = theme;
+					jsonMatter.variations = [pageMatter.data, ...jsonMatter.variations];
+				});
+			}
+			Object.assign(pageMatter.data, jsonMatter);
+		}
+
 		if (collection) {
 			pageMatter.data.baseurl = '..';
 		}
@@ -748,7 +765,9 @@ var dev = function () {
 		pageMatter.data.GLOBAL = options.GLOBAL;
 
 		// template using Handlebars
-		var source = wrapPage(pageContent, assembly.layouts[pageMatter.data.layout || options.layout]),
+		var layout = pageMatter.data.layout || options.layout;
+		layout = jsonMatter && jsonMatter.variations ? "dev" : layout;
+		var source = wrapPage(pageContent, assembly.layouts[layout]),
 			context = buildContext(pageMatter.data),
 			template = Handlebars.compile(source);
 
@@ -757,14 +776,15 @@ var dev = function () {
 			filePath = path.normalize(pageMatter.data.dest);
 		}
 
-    if (options.destMap[collection]) {
-			filePath = path.normalize(path.join(options.destMap[collection], path.basename(file)));
-    }
+		if (options.destMap[collection]) {
+				filePath = path.normalize(path.join(options.destMap[collection], path.basename(file)));
+		}
 
 		// change extension to .html
 		filePath = filePath.replace(/\.[0-9a-z]+$/, options.extension);
 
 		// write file
+		//For each variation in .json file
 		mkdirp.sync(path.dirname(filePath));
 		try {
 			fs.writeFileSync(filePath, template(context));
@@ -789,16 +809,19 @@ var dev = function () {
  * Module exports
  * @return {Object} Promise
  */
-module.exports = function (options) {
+module.exports = function (options, isDev) {
 
 	try {
 
 		// setup assembly
-		setup(options);
+		setup(options, isDev);
 
-
-		assemble();
-		// dev();
+		if(!isDev) {
+			assemble();
+			dev();
+		} else {
+			dev();
+		}
 
 	} catch(e) {
 		handleError(e);

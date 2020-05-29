@@ -3,7 +3,7 @@
   "js": "main.js",
   "css": "main.css",
   "bodyClass": "",
-  "documentation": "Lightweight, flexible component for showcasing hero unit style content.",
+  "notes": "Lightweight, flexible component for showcasing hero unit style content.",
   "mainClass": "",
   "variations": [
     {

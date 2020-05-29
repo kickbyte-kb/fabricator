@@ -23,6 +23,7 @@ function reload(done) {
 // configuration
 const config = {
   dev: !!argv.dev,
+  guide: !!argv.guide,
   styles: {
     browsers: [
       'ie 11',
@@ -64,7 +65,7 @@ const config = {
     },
   },
   templates: {
-    watch: ['src/**/**/*.{html,md,json,yml}', 'src/**/*.{html,md,json,yml}'],
+    watch: ['src/**/**/*.{html,md,json,yml,handlebars,html}', 'src/**/*.{html,md,json,yml,handlebars,html}'],
   },
   dest: 'dist',
 };
@@ -196,6 +197,10 @@ function assembler(done) {
       mod: function mod(a, b) {
         return +a % +b;
       },
+      def: function(value, fallback) {
+        var out = value || fallback;
+        return out;
+      },
       json: function json(context) {
         return JSON.stringify(context, null, 1);
       },
@@ -231,7 +236,7 @@ function assembler(done) {
         return ret;
       },
     },
-  });
+  }, config.dev);
   done();
 }
 
@@ -273,5 +278,6 @@ function watch() {
 
 // default build task
 let tasks = [clean, styles, scripts, images, assembler];
-if (config.dev) tasks = tasks.concat([serve, watch]);
+if (config.dev || config.guide) tasks = tasks.concat([serve, watch]);
+if (config.dev) tasks.splice(0, 1); // prevent clean
 gulp.task('default', gulp.series(tasks));
