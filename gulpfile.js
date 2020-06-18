@@ -41,7 +41,7 @@ function reload(done) {
 var xs = "base";
 var sm = "simple";
 var md = "dynamic";
-var lg = "compound";
+var lg = "section";
 var xlg = "page";
 
 var templates = [
@@ -117,11 +117,11 @@ const config = {
     return [
       `src/base/*.{${ext}}`,
       `src/simple/*.{${ext}}`,
-      `src/compound/*.{${ext}}`,
+      `src/section/*.{${ext}}`,
       `src/dynamic/*.{${ext}}`,
       `src/base/**/*.{${ext}}`,
       `src/simple/**/*.{${ext}}`,
-      `src/compound/**/*.{${ext}}`,
+      `src/section/**/*.{${ext}}`,
       `src/dynamic/**/*.{${ext}}`]
   },
   dest: 'dist',
@@ -616,7 +616,7 @@ const approve = async () => {
 
 const test = gulp.series(testUpdate, testTest);
 
-// /** Tests newly created component and approves immediately to have reference files saved*/
+//** Tests newly created component and approves immediately to have reference files saved */
 const TestSingleFile = async (name, type) => {
   await serveTest();
   var jsonConfig = JSON.parse(readFileSync("./backstop.json.bak", { encoding: 'utf8'}));
