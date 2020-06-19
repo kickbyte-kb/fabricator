@@ -8,12 +8,8 @@
 
 	<title>{{title}}</title>
 
-	{{#if fabricator}}<link rel="stylesheet" href="{{#if baseurl}}{{ baseurl }}/{{/if}}assets/fabricator/styles/f.css">{{/if}}
-
-	<!-- project styles -->
-	<link rel="stylesheet" href="{{#if baseurl}}{{ baseurl }}/{{/if}}assets/css/project.css">
-	<!-- /project styles -->
-
+	{{> f-stylesheets}}
+	
 </head>
 <body>
 	<div style="padding: 5px 5px 20px 5px;"><a href="{{guideurl}}">< Guide</a></div>
@@ -32,14 +28,6 @@
 		{% body %}
 	{{/if}}
 
-	{{#if fabricator}}
-		</div>
-	<script src="{{#if baseurl}}{{ baseurl }}/{{/if}}assets/fabricator/scripts/f.js"></script>
-	{{/if}}
-
-	<!-- project scripts -->
-	<script src="{{#if baseurl}}{{ baseurl }}/{{/if}}assets/scripts/main.js"></script>
-	<!-- /project scripts -->
-
+	{{> f-scripts}}
 </body>
 </html>

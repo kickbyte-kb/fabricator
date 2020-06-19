@@ -65,7 +65,6 @@ let templates = [
 // configuration
 const config = {
   dev: !!argv.dev,
-  all: !!argv.all,
   name: argv.name
     ? argv.name.charAt(0).toLowerCase() + argv.name.substring(1)
     : null,
@@ -408,7 +407,7 @@ const make = async () => {
       log(color(`Must define type with --type=[${templates.join(", ")}]`, 'RED'));
       return;
   }
-  let name = config.name;
+  let name = config.name.charAt(0).toLowerCase() + config.name.slice(1);
   let type = config.type;
   let path = config.path();
 
@@ -527,6 +526,9 @@ var images = true;
       break;
     case lg:
       schema.content = content;
+      js = `class ${jsName} {}
+      export default ${jsName};
+      `;
       var html = `<div class="jumbotron ${type}-${cssName}">
       <h1 class="display-4">Hello, world!</h1>
       <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
@@ -706,7 +708,7 @@ const removeFolder = async (name, type) => {
 
 // default build task
 let tasks = [clean, styles, scripts, scriptsVendor, images, assembler];
-if (config.dev) tasks = tasks.concat([serve, watch]);
+tasks = tasks.concat([serve, watch]);
 if (config.dev) tasks.splice(0, 1); // prevent clean
 gulp.task('make', make);
 gulp.task('test', test);
