@@ -40,7 +40,6 @@ const asyncAppendFile = util.promisify(appendFile);
 const asyncRimraf = util.promisify(rimraf);
 const asyncPrepend = util.promisify(prepend);
 const asyncBasktop = util.promisify(backstop);
-const asyncInit = util.promisify(browserSync.init);
 
 let server = false;
 function reload(done) {
@@ -74,8 +73,8 @@ const config = {
       ? `./src/${config.type}/${config.name}/`
       : `./src/views/${config.type}/${config.name}/`,
   host: 'localhost',
-  port: '3000',
-  serverUrl: 'http://127.0.0.1:5500',
+  port: '1234',
+  serverUrl: () => `http://${config.host}:${config.port}`,
   styles: {
     browsers: [
       'ie 11',
@@ -92,9 +91,14 @@ const config = {
       watch: 'src/assets/fabricator/styles/**/*',
     },
     project: {
+      imports: 'src/assets/scss/imports.scss',
       src: ['src/assets/scss/*'],
       dest: 'dist/assets/css',
       watch: 'src/assets/scss/*',
+    },
+    materials: {
+      src: 'src/**/**/*.scss',
+      watch: 'src/**/**/*.scss'
     },
     vendor: {
       src: 'src/vendor/**/dist/css/*',
@@ -132,22 +136,24 @@ const config = {
   },
   materials (ext) {
     return [
-      `src/base/*.{${ext}}`,
-      `src/simple/*.{${ext}}`,
-      `src/section/*.{${ext}}`,
-      `src/dynamic/*.{${ext}}`,
-      `src/base/**/*.{${ext}}`,
-      `src/simple/**/*.{${ext}}`,
-      `src/section/**/*.{${ext}}`,
-      `src/dynamic/**/*.{${ext}}`]
+      `src/${xs}/*.{${ext}}`,
+      `src/${sm}/*.{${ext}}`,
+      `src/${md}/*.{${ext}}`,
+      `src/${lg}/*.{${ext}}`,
+      `src/${xs}/**/*.{${ext}}`,
+      `src/${sm}/**/*.{${ext}}`,
+      `src/${md}/**/*.{${ext}}`,
+      `src/${lg}/**/*.{${ext}}`]
   },
+  allMaterials: [
+    // `src/${xs}`, keep the base elements which should be simple tags 
+    `src/${md}`,
+    `src/${lg}`,
+    `src/${sm}`,
+    `src/views/${xlg}`,
+  ],
   dest: 'dist',
 };
-
-
-var stylesGlob = templates.map((t) => `./src/${t}/**/*.scss`);
-var stylesGlobLint = [...stylesGlob, "./src/assets/scss/*.scss"];
-var stylesGlobCompile =  [...stylesGlobLint, "./vendor/**/**/*.scss"];
 
 let helpers = {
   // {{ default description "string of content used if description var is undefined" }}
@@ -243,6 +249,12 @@ let helpers = {
 
 // clean
 const clean = () => del([config.dest]);
+const  reset = async () =>  {
+  del(config.allMaterials);
+  del(['./backstop_data']);
+  await asyncWriteFile(config.styles.project.imports, '');
+  return asyncWriteFile(`src/assets/js/main.js`, 'export default {}; \n');
+}
 
 // styles
 function stylesFabricator() {
@@ -262,7 +274,7 @@ function stylesFabricator() {
 const lintStyles = () => {
   var errorType = ''; //fail on errors
   var endless = false;
-  return gulp.src(stylesGlobLint)
+  return gulp.src([config.styles.project.src, config.styles.materials.src])
       .pipe(debug({title: "linting: ", showFiles: true, showCount: false}))
       .pipe(scsslint({
           'config': "./lint.yml",
@@ -354,16 +366,38 @@ async function assembler() {
   }, config.dev);
 }
 
+
 // server
 function serve(done) {
   server = browserSync.create();
-  server.init({
+  return server.init({
     server: {
       baseDir: config.dest,
     },
     notify: false,
     logPrefix: 'FABRICATOR',
   });
+  done();
+}
+
+async function initTestServer() {
+  var testServer = browserSync.create("test");
+  var asyncServer = util.promisify(testServer.init);
+  await asyncServer({
+    server: {
+      baseDir: config.dest,
+    },
+    open: false,
+    port: config.port,
+    notify: false,
+    logPrefix: 'FABRICATOR',
+  });
+  console.log(testServer.pagesConfig);
+};
+
+async function closeTestServer(done) {
+  var testServer = browserSync.get("test");
+  testServer.exit();
   done();
 }
 
@@ -384,7 +418,7 @@ function watch() {
     gulp.series(images, reload)
   );
   gulp.watch(
-    [config.styles.fabricator.watch, config.styles.project.watch],
+    [config.styles.fabricator.watch, config.styles.project.watch, config.styles.materials.watch],
     { interval: 500 },
     gulp.series(styles, reload)
   );
@@ -572,7 +606,7 @@ var images = true;
   if (scss) {
     var cssFile = await asyncWriteFile(`${dirName}/_${name}.scss`, scss);
     var mainScssFile = await asyncAppendFile(
-      `src/assets/scss/imports.scss`,
+      config.styles.project.imports,
       `@import '../../${type}/${name}/${name}';\n`
     );
     listOfPromises.push(cssFile);
@@ -634,14 +668,13 @@ const testUpdate = async () => {
 };
 
 /** reference https://www.npmjs.com/package/backstopjs */
-const testTest = async () => {
-  await asyncBasktop('test');
-  return server.exit();
+const testTest = () => {
+  return backstop('test').then(() => { return true}).catch((e) => {console.log(e)});
 };
 
 /** reference https://www.npmjs.com/package/backstopjs */
 const approve = async () => {
-  return await asyncBasktop('approve');
+  return backstop('approve').then(() => { return true}).catch((e) => {console.log(e)});
 };
 
 const test = gulp.series(testUpdate, testTest);
@@ -680,13 +713,13 @@ const removeFolder = async (name, type) => {
       let rmDist = await asyncRimraf(`./dist/${type}/${name}.html`);
       let rmBackstopRef = await asyncRimraf(`./backstop_data/bitmaps_reference/backstop_default_${type}-${name}-*`);
      let rmBackstopTests = await asyncRimraf(`./backstop_data/bitmaps_test/**/backstop_default_${type}-${name}-*`);
-  var scss = await asyncReadFile(`src/assets/scss/imports.scss`, {
+  var scss = await asyncReadFile(config.styles.project.imports, {
     encoding: 'utf8',
   });
   let newScss = scss.replace(`@import '../../${type}/${name}/${name}';\n`, "");
 
   var rmMainScssLine = await asyncWriteFile(
-    `src/assets/scss/imports.scss`,
+    config.styles.project.imports,
     newScss
   );
       let mainJs = await asyncReadFile(`src/assets/js/main.js`, { encoding: 'utf8'});
@@ -711,11 +744,12 @@ let tasks = [clean, styles, scripts, scriptsVendor, images, assembler];
 tasks = tasks.concat([serve, watch]);
 if (config.dev) tasks.splice(0, 1); // prevent clean
 gulp.task('make', make);
-gulp.task('test', test);
+gulp.task('test', gulp.series([initTestServer, test, closeTestServer]));
 gulp.task('approve', approve);
 gulp.task('rmFolder', rmFolder);
 gulp.task('serve', serve);
 gulp.task('clean', clean);
+gulp.task('reset', reset);
 // TODO ensure linting is happening
 // gulp.task('deployStyles', exportStyles);
 // gulp.task('deployScripts', exportScripts);
