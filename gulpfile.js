@@ -20,7 +20,17 @@ const rimraf = require('rimraf');
 const prepend = require('prepend-file');
 const color = require('gulp-color');
 const glob = require('glob');
-const {writeFileSync, readFileSync, readFile, appendFile, mkdir, writeFile, existsSync} = require('fs');
+const scsslint = require('gulp-scss-lint');
+
+const {
+  writeFileSync,
+  readFileSync,
+  readFile,
+  appendFile,
+  mkdir,
+  writeFile,
+  existsSync,
+} = require('fs');
 const webserver = require('gulp-webserver');
 
 const asyncMkdir = util.promisify(mkdir);
@@ -38,13 +48,13 @@ function reload(done) {
   done();
 }
 
-var xs = "base";
-var sm = "simple";
-var md = "dynamic";
-var lg = "section";
-var xlg = "page";
+let xs = 'base';
+var sm = 'simple';
+var md = 'dynamic';
+var lg = 'section';
+var xlg = 'page';
 
-var templates = [
+let templates = [
     xs,
     sm,
     md,
@@ -55,13 +65,18 @@ var templates = [
 // configuration
 const config = {
   dev: !!argv.dev,
-  guide: !!argv.guide,
-  name: argv.name ? argv.name.charAt(0).toLowerCase() + argv.name.substring(1) : null,
+  all: !!argv.all,
+  name: argv.name
+    ? argv.name.charAt(0).toLowerCase() + argv.name.substring(1)
+    : null,
   type: argv.type ? argv.type : null,
-  path: () => config.type != xlg ? `./src/${config.type}/${config.name}/` : `./src/views/${config.type}/${config.name}/`,
-  host: "localhost",
-  port: "3000",
-  serverUrl: "http://127.0.0.1:5500",
+  path: () =>
+    config.type != xlg
+      ? `./src/${config.type}/${config.name}/`
+      : `./src/views/${config.type}/${config.name}/`,
+  host: 'localhost',
+  port: '3000',
+  serverUrl: 'http://127.0.0.1:5500',
   styles: {
     browsers: [
       'ie 11',
@@ -77,7 +92,7 @@ const config = {
       dest: 'dist/assets/fabricator/styles',
       watch: 'src/assets/fabricator/styles/**/*',
     },
-    toolkit: {
+    project: {
       src: ['src/assets/scss/*'],
       dest: 'dist/assets/css',
       watch: 'src/assets/scss/*',
@@ -93,7 +108,7 @@ const config = {
       dest: 'dist/assets/fabricator/scripts',
       watch: 'src/assets/fabricator/scripts/**/*',
     },
-    toolkit: {
+    project: {
       src: './src/assets/js/main.js',
       dest: 'dist/assets/scripts',
       watch: 'src/assets/js/*',
@@ -104,16 +119,19 @@ const config = {
     },
   },
   images: {
-    toolkit: {
+    project: {
       src: ['src/assets/images/**/*', 'src/**/**/images/*', 'src/favicon.ico'],
       dest: 'dist/assets/images',
       watch: 'src/assets/images/**/*',
     },
   },
   templates: {
-    watch: ['src/**/**/*.{html,md,json,yml,handlebars,html}', 'src/**/*.{html,md,json,yml,handlebars,html}'],
+    watch: [
+      'src/**/**/*.{html,md,json,yml,handlebars,html}',
+      'src/**/*.{html,md,json,yml,handlebars,html}',
+    ],
   },
-  materials: function (ext) {
+  materials (ext) {
     return [
       `src/base/*.{${ext}}`,
       `src/simple/*.{${ext}}`,
@@ -124,30 +142,16 @@ const config = {
       `src/section/**/*.{${ext}}`,
       `src/dynamic/**/*.{${ext}}`]
   },
+  styles
   dest: 'dist',
 };
 
 
+var stylesGlob = templates.map((t) => `./src/${t}/**/*.scss`);
+var stylesGlobLint = [...stylesGlob, "./src/assets/scss/*.scss"];
+var stylesGlobCompile =  [...stylesGlobLint, "./vendor/**/**/*.scss"];
 
-
-// var stylesGlob = templates.map((t) => `./src/${t}/**/*.scss`);
-// var stylesGlobLint = [...stylesGlob, "./src/assets/scss/*.scss"];
-// var stylesGlobCompile =  [...stylesGlobLint, "./vendor/**/**/*.scss"];
-
-// var assetsGlob = templates.map((t) => `./src/${t}/**/images/*`);
-// var assetsGlobCompile = [...assetsGlob, "./src/assets/images/*", "./src/assets/fonts/*"];
-
-// var vendorScripts = './vendor/**/dist/js/*.js';
-// var scriptsGlob = templates.map((t) => `./src/${t}/**/*.js`);
-// var scriptsGlobCompile = [...scriptsGlob, "./src/assets/js/*.js"];
-
-// var htmlGlobOnly = templates.map((t) => `./src/${t}/**/*.handlebars`);
-// var htmlGlobCompileOnly = [...htmlGlobOnly, `./src/${xxlg}/*.handlebars`];
-
-// var htmlGlob = templates.map((t) => `./src/${t}/**/*.{handlebars,json}`);
-// var htmlGlobCompile = [...htmlGlob, `./src/${xxlg}/*.handlebars`];
-
-var helpers = {
+let helpers = {
   // {{ default description "string of content used if description var is undefined" }}
   default: function defaultFn(...args) {
     return args.find(value => !!value);
@@ -199,7 +203,7 @@ var helpers = {
   mod: function mod(a, b) {
     return +a % +b;
   },
-  def: function(value, fallback) {
+  def(value, fallback) {
     var out = value || fallback;
     return out;
   },
@@ -209,7 +213,7 @@ var helpers = {
   toString: function toString(array) {
     if(Array.isArray(array)) {
       return array.join(", ");
-    } else if(array instanceof Object) {
+    } if(array instanceof Object) {
       return Object.values(array);
     } else if(array instanceof String) {
       return array;
@@ -218,19 +222,19 @@ var helpers = {
   atIndex: function atIndex(array, index) {
     if(Array.isArray(array)) {
       return array[index];
-    } else {
+    } 
       return "Error: object is not an array";
-    }
+    
   },
   eachData: function eachData(context, options) {
-    var fn = options.fn, inverse = options.inverse, ctx;
-    var ret = "";
+    let fn = options.fn; var inverse = options.inverse; var ctx;
+    let ret = '';
 
-    if(context && context.length > 0) {
-      for(var i=0, j=context.length; i<j; i++) {
+    if (context && context.length > 0) {
+      for (var i = 0, j = context.length; i < j; i++) {
         ctx = Object.create(context[i]);
         ctx.index = i;
-        ret = ret + fn(ctx);
+        ret += fn(ctx);
       }
     } else {
       ret = inverse(this);
@@ -255,9 +259,23 @@ function stylesFabricator() {
     .pipe(gulp.dest(config.styles.fabricator.dest));
 }
 
-function stylesToolkit() {
+
+/**reference: https://www.npmjs.com/package/gulp-scss-lint */
+const lintStyles = () => {
+  var errorType = ''; //fail on errors
+  var endless = false;
+  return gulp.src(stylesGlobLint)
+      .pipe(debug({title: "linting: ", showFiles: true, showCount: false}))
+      .pipe(scsslint({
+          'config': "./lint.yml",
+          'reporterOutputFormat': 'Checkstyle',
+      }))
+      .pipe(scsslint.failReporter(errorType)); //if you just want failReporter to fail just with errors pass the 'E' string
+};
+
+function stylesProject() {
   return gulp
-    .src(config.styles.toolkit.src)
+    .src(config.styles.project.src)
     .pipe(gulpif(config.dev, sourcemaps.init()))
     .pipe(
       sass({
@@ -267,12 +285,14 @@ function stylesToolkit() {
     .pipe(prefix(config.styles.browsers))
     .pipe(gulpif(!config.dev, csso()))
     .pipe(gulpif(config.dev, sourcemaps.write()))
-    .pipe(gulp.dest(config.styles.toolkit.dest));
+    .pipe(gulp.dest(config.styles.project.dest));
 }
 
 function stylesVendor() {
-  return gulp.src(config.styles.vendor.src)
-  .pipe(rename(function(path) {
+  return gulp
+    .src(config.styles.vendor.src)
+    .pipe(
+      rename((path) => {
     path.dirname = "";
     return path;
   }))
@@ -280,15 +300,17 @@ function stylesVendor() {
 }
 
 function scriptsVendor() {
-  return gulp.src(config.scripts.vendor.src)
-  .pipe(rename(function(path) {
+  return gulp
+    .src(config.scripts.vendor.src)
+    .pipe(
+      rename((path) => {
     path.dirname = "";
     return path;
   }))
   .pipe(gulp.dest(config.scripts.vendor.dest))
 }
 
-const styles = gulp.parallel(stylesFabricator, stylesToolkit, stylesVendor);
+const styles = gulp.parallel(stylesFabricator, stylesProject, stylesVendor);
 
 // scripts
 const webpackConfig = require('./webpack.config')(config);
@@ -315,21 +337,22 @@ function imgFavicon() {
 
 function imgMinification() {
   return gulp
-    .src(config.images.toolkit.src)
+    .src(config.images.project.src)
     .pipe(imagemin())
-    .pipe(gulp.dest(config.images.toolkit.dest));
+    .pipe(gulp.dest(config.images.project.dest));
 }
 const images = gulp.series(imgFavicon, imgMinification);
 
 // assembly
 async function assembler() {
-  return fabAssemble({
+  return fabAssemble(
+    {
     materials: config.materials("html,handlebars"),
     data: ['src/assets/data/*.yml', ...config.materials("json,yml")],
     docs: config.materials("md"),
-    logErrors: config.dev,
+      logErrors: config.dev,
     dest: config.dest,
-    helpers: helpers,
+      helpers: helpers,
   }, config.dev);
 }
 
@@ -346,18 +369,6 @@ function serve(done) {
   done();
 }
 
-var serverPage = false;
-// server
-async function serveTest() {
-  serverPage = browserSync.create();
-   await serverPage.init({
-    server: {
-      baseDir: config.dest,
-    }
-  });
-};
-
-
 function watch() {
   gulp.watch(
     config.templates.watch,
@@ -365,49 +376,49 @@ function watch() {
     gulp.series(assembler, reload)
   );
   gulp.watch(
-    [config.scripts.fabricator.watch, config.scripts.toolkit.watch],
+    [config.scripts.fabricator.watch, config.scripts.project.watch],
     { interval: 500 },
     gulp.series(scripts, reload)
   );
   gulp.watch(
-    config.images.toolkit.watch,
+    config.images.project.watch,
     { interval: 500 },
     gulp.series(images, reload)
   );
   gulp.watch(
-    [config.styles.fabricator.watch, config.styles.toolkit.watch],
+    [config.styles.fabricator.watch, config.styles.project.watch],
     { interval: 500 },
     gulp.series(styles, reload)
   );
 }
 
 
-/**make:
+/** make:
  * command line operation: takes --name= and --type=
  * runs make folder, if fails reverts folders and files made
  * runs compileHtml if fails reverts folders and files made
  * runs tests & approve if fails revers folders and files made
  */
 const make = async () => {
-  if(!config.name) {
+  if (!config.name) {
       log(color(`Must define name with --name=$FolderName`, 'RED'));
-      return;
+    return;
   }
 
-  if(!config.type) {
+  if (!config.type) {
       log(color(`Must define type with --type=[${templates.join(", ")}]`, 'RED'));
       return;
   }
-  var name = config.name;
-  var type = config.type;
-  var path = config.path();
+  let name = config.name;
+  let type = config.type;
+  let path = config.path();
 
-  if(existsSync(path)) { 
-      log(color("this directory already exists", 'RED'));
+  if (existsSync(path)) {
+    log(color('this directory already exists', 'RED'));
       return;
   }
 
-  if(templates.indexOf(type) < 0) {
+  if (templates.indexOf(type) < 0) {
       log(color(`this type does not exists. Try: \n${templates.join(", \n")}`, 'RED'));
       return;
   }
@@ -416,20 +427,20 @@ const make = async () => {
       await mkFolder(name, type, path);
       log(color(`Made Folder src/${type}/${name}`, 'YELLOW'));
   } catch (err) {
-      console.log("mkFolder Error: " + err);
-      return await removeFolder(name, type);
+    console.log('mkFolder Error: ' + err);
+    return await removeFolder(name, type);
   }
 
   try {
-      // await compileHtmlSingleFile(name, type, path);
+    // await compileHtmlSingleFile(name, type, path);
       await assembler();
       log(color(`Compiled ${name}`, 'YELLOW'));
   } catch (e) {
-      console.log("compileHtml Error: " + e);
+      console.log(`compileHtml Error: ${  e}`);
       return await removeFolder(name, type);
   }
 
-  //backstop
+  // backstop
   // try {
   //     await TestSingleFile(name, type);
   //     log(color(`Tested and Approved ${name}`, 'YELLOW'));
@@ -443,45 +454,45 @@ const make = async () => {
   // }
 
   return Promise.resolve();
-}
+};
 
-/** mkFolder: 
+/** mkFolder:
  * depending on user inputs will create unique component scafolding based on type.
  */
 const mkFolder = async (name, type, dirName) => {
-  var html = "";
+  var html = '';
   var images = false;
-  var js = null;
-  var cssName = config.name.replace( /([A-Z])/g, "-$1" ).toLowerCase();
-  var jsName = name.charAt(0).toUpperCase() + name.slice(1);
-  var scss = `.${type}-${cssName} {}
-`; 
-  var schema = {
-      "title": `${name}`,
-      "js": "main.js",
+  let js = null;
+  let cssName = config.name.replace(/([A-Z])/g, '-$1').toLowerCase();
+  let jsName = name.charAt(0).toUpperCase() + name.slice(1);
+  let scss = `.${type}-${cssName} {}
+`;
+  let schema = {
+    title: `${name}`,
+    js: 'main.js',
       "css": "main.css",
-      "bodyClass": "",
+    bodyClass: '',
       "mainClass": "",
       "documentation": "",
 };
-  var variations = [
-      {
+  let variations = [
+    {
           "partial": `${name}`,
           "data": {
               "text": `${name}`,
-              "cssVariation": ""
-          }
-      }
+        cssVariation: '',
+      },
+    },
   ];
-  var content = [
-      {
+  let content = [
+    {
           "partial": `${name}`,
-          "data": {
-              "title": `${name}`
-          }
-      }
+      data: {
+        title: `${name}`,
+      },
+    },
   ];
-  switch(config.type) {
+  switch (config.type) {
       case xs:
           schema.variations = variations;
           html = `<button class="${type}-${cssName} {{cssVariation}}">
@@ -495,7 +506,7 @@ const mkFolder = async (name, type, dirName) => {
           A simple primary alert—check it out!
         </div>
 `;
-          js = `class ${jsName} {}
+      js = `class ${jsName} {}
 export default ${jsName};
 `;
 var images = true;
@@ -510,12 +521,12 @@ var images = true;
   </ol>
 </nav>
 `;
-              js = `class ${jsName} {}
+      js = `class ${jsName} {}
 export default ${jsName};
 `;
 var images = true;
       break;
-      case lg: 
+    case lg:
       schema.content = content;
       var html = `<div class="jumbotron ${type}-${cssName}">
       <h1 class="display-4">Hello, world!</h1>
@@ -545,30 +556,39 @@ var images = true;
 `;
 
       break;
-      default: 
-          throw "issue creating files";
+    default:
+      throw 'issue creating files';
   }
 
-  var listOfPromises = [];
-  var topFolder = await asyncMkdir(dirName, { recursive: true });
-  var htmlFile = await asyncWriteFile(`${dirName}/${name}.handlebars`, html);
-  var schemaFile = await asyncWriteFile(`${dirName}/${name}.json`, JSON.stringify(schema, null, 2)); 
+  let listOfPromises = [];
+  let topFolder = await asyncMkdir(dirName, { recursive: true });
+  let htmlFile = await asyncWriteFile(`${dirName}/${name}.handlebars`, html);
+  let schemaFile = await asyncWriteFile(
+    `${dirName}/${name}.json`,
+    JSON.stringify(schema, null, 2)
+  );
 
-  if(scss) {
-      var cssFile = await asyncWriteFile(`${dirName}/_${name}.scss`, scss);
-      var mainScssFile = await asyncAppendFile(`src/assets/scss/main.scss`, `@import '../../${type}/${name}/${name}';\n`);
-      listOfPromises.push(cssFile);
+  if (scss) {
+    var cssFile = await asyncWriteFile(`${dirName}/_${name}.scss`, scss);
+    var mainScssFile = await asyncAppendFile(
+      `src/assets/scss/imports.scss`,
+      `@import '../../${type}/${name}/${name}';\n`
+    );
+    listOfPromises.push(cssFile);
   }
 
-  if(images) {
-      var imageDir = await asyncMkdir(`${dirName}/images`, { recursive: true });
-      listOfPromises.push(imageDir);
+  if (images) {
+    var imageDir = await asyncMkdir(`${dirName}/images`, { recursive: true });
+    listOfPromises.push(imageDir);
   }
 
-  if(js) {
-      var jsFile = await asyncWriteFile(`${dirName}/${name}.js`, js); 
-      var mainJsFile = await asyncPrepend(`src/assets/js/main.js`, `import { ${name} } from '../../${type}/${name}/${name}';\n`);
-      listOfPromises.push(jsFile);
+  if (js) {
+    var jsFile = await asyncWriteFile(`${dirName}/${name}.js`, js);
+    var mainJsFile = await asyncPrepend(
+      `src/assets/js/main.js`,
+      `import { ${name} } from '../../${type}/${name}/${name}';\n`
+    );
+    listOfPromises.push(jsFile);
       listOfPromises.push(mainJsFile);
   }
 
@@ -579,35 +599,44 @@ var images = true;
   return Promise.all(listOfPromises);
 };
 
-/**START: Tests */
+/** START: Tests */
 
 /** grabs the basic baskstop template, updates the scenarios with all files in dist/*.html */
 /** reference https://www.npmjs.com/package/backstopjs */
-const testUpdate = async() => {
-  var scenarios = [];
-  var configFile = await asyncReadFile("./backstop.json.bak", { encoding: 'utf8'});
-  var backstopConfig = JSON.parse(configFile);
-      let allHtml = glob.sync("./dist/**/*.html", {"ignore":["./dist/*.html"]}); // ignore the style guide html pages
-      for(var i = 0; i < allHtml.length; i++) {
-          let file = allHtml[i];
-          var label = file.replace("./dist/", "").replace(".html", "").split("/").join("-");
-          var url = server ? server.proxy : config.serverUrl;
-          var fileJson = 
+const testUpdate = async () => {
+  let scenarios = [];
+  let configFile = await asyncReadFile('./backstop.json.bak', {
+    encoding: 'utf8',
+  });
+  let backstopConfig = JSON.parse(configFile);
+  let allHtml = glob.sync('./dist/**/*.html', { ignore: ['./dist/*.html'] }); // ignore the style guide html pages
+  for (let i = 0; i < allHtml.length; i++) {
+    let file = allHtml[i];
+    var label = file
+      .replace('./dist/', '')
+      .replace('.html', '')
+      .split('/')
+      .join('-');
+          let url = server ? server.proxy : config.serverUrl;
+          let fileJson = 
           {
-              label: label,
+      label: label,
               url: file.replace("./dist", url) 
-          };
+    };
           scenarios.push(fileJson);
-      }
+  }
       backstopConfig.scenarios = scenarios;
-      return await asyncWriteFile("./backstop.json", JSON.stringify(backstopConfig, null, 1));
+  return await asyncWriteFile(
+    './backstop.json',
+    JSON.stringify(backstopConfig, null, 1)
+  );
 };
 
 /** reference https://www.npmjs.com/package/backstopjs */
 const testTest = async () => {
   await asyncBasktop('test');
   return server.exit();
-}
+};
 
 /** reference https://www.npmjs.com/package/backstopjs */
 const approve = async () => {
@@ -616,52 +645,28 @@ const approve = async () => {
 
 const test = gulp.series(testUpdate, testTest);
 
-//** Tests newly created component and approves immediately to have reference files saved */
-const TestSingleFile = async (name, type) => {
-  await serveTest();
-  var jsonConfig = JSON.parse(readFileSync("./backstop.json.bak", { encoding: 'utf8'}));
-  var label = `${type}-${name}`;
-  var serverurl = `${config.serverUrl}/dist/${type}/${name}.html`;
-  config.scenarios = [{
-
-      label: label,
-      url: serverurl
-  }];
-  jsonConfig.report = ["browser"];
-  return backstop("test", {config: jsonConfig}).then((e) => {
-      console.log(e);
-      // test successful
-  }).catch((err) => {
-      console.log(err);
-      //test failed
-      backstop("approve", {config: jsonConfig}, (err) => {
-          console.log(err);
-      });
-  });
-}
-
 /** Start Reverts */
-//** user to enter --name and -type to completely remove a component from project */
-const rmFolder = async() => {
-  if(!config.name) {
+//* * user to enter --name and -type to completely remove a component from project */
+const rmFolder = async () => {
+  if (!config.name) {
       log(color(`Must define name with --name=$FolderName`, 'RED'));
-      return;
+    return;
   }
 
-  if(!config.type) {
+  if (!config.type) {
       log(color(`Must define type with --type=DesignType`, 'RED'));
       return;
   }
-  var name = config.name;
-  var type = config.type;
-  var path = config.path();
+  let name = config.name;
+  let type = config.type;
+  let path = config.path();
 
-  if(!existsSync(path)) {
+  if (!existsSync(path)) {
       log(color("this directory does not exists", 'RED'));
-      return;
+    return;
   }
 
-  if(templates.indexOf(type) < 0) {
+  if (templates.indexOf(type) < 0) {
       log(color(`this type does not exists. Try: \n${templates.join(", \n")}`, 'RED'));
       return;
   }
@@ -670,33 +675,47 @@ const rmFolder = async() => {
 };
 
 const removeFolder = async (name, type) => {
-      var rmFolder = await asyncRimraf(`./src/${type}/${name}`);
-      var rmDist = await asyncRimraf(`./dist/${type}/${name}.html`);
-      var rmBackstopRef = await asyncRimraf(`./backstop_data/bitmaps_reference/backstop_default_${type}-${name}-*`);
-     var rmBackstopTests = await asyncRimraf(`./backstop_data/bitmaps_test/**/backstop_default_${type}-${name}-*`);
-      var mainScss = await asyncReadFile(`src/assets/scss/main.scss`, { encoding: 'utf8'});
-      var mainScssNew = mainScss.replace(`@import '../../${type}/${name}/${name}';\n`, "");
-      var rmMainScssLine = await asyncWriteFile(`src/assets/scss/main.scss`, mainScssNew);
-      var mainJs = await asyncReadFile(`src/assets/js/main.js`, { encoding: 'utf8'});
-      var mainJsNew = mainJs.replace(`import { ${name} } from '../../${type}/${name}/${name}';\n`, "");
-      var rmMainJsLine = await asyncWriteFile(`src/assets/js/main.js`, mainJsNew);
-      return Promise.all([rmFolder, rmDist, rmBackstopRef, rmBackstopTests, rmMainScssLine, rmMainJsLine]);
+  var rmFolder = await asyncRimraf(`./src/${type}/${name}`);
+      let rmDist = await asyncRimraf(`./dist/${type}/${name}.html`);
+      let rmBackstopRef = await asyncRimraf(`./backstop_data/bitmaps_reference/backstop_default_${type}-${name}-*`);
+     let rmBackstopTests = await asyncRimraf(`./backstop_data/bitmaps_test/**/backstop_default_${type}-${name}-*`);
+  var scss = await asyncReadFile(`src/assets/scss/imports.scss`, {
+    encoding: 'utf8',
+  });
+  let newScss = scss.replace(`@import '../../${type}/${name}/${name}';\n`, "");
+
+  var rmMainScssLine = await asyncWriteFile(
+    `src/assets/scss/imports.scss`,
+    newScss
+  );
+      let mainJs = await asyncReadFile(`src/assets/js/main.js`, { encoding: 'utf8'});
+  var mainJsNew = mainJs.replace(
+    `import { ${name} } from '../../${type}/${name}/${name}';\n`,
+    ''
+  );
+  let rmMainJsLine = await asyncWriteFile(`src/assets/js/main.js`, mainJsNew);
+  return Promise.all([
+    rmFolder,
+    rmDist,
+    rmBackstopRef,
+    rmBackstopTests,
+    rmMainScssLine,
+    rmMainJsLine,
+  ]);
 };
 
 
 // default build task
 let tasks = [clean, styles, scripts, scriptsVendor, images, assembler];
-if (config.dev || config.guide) tasks = tasks.concat([serve, watch]);
+if (config.dev) tasks = tasks.concat([serve, watch]);
 if (config.dev) tasks.splice(0, 1); // prevent clean
 gulp.task('make', make);
 gulp.task('test', test);
 gulp.task('approve', approve);
 gulp.task('rmFolder', rmFolder);
-gulp.task("serve", serve);
-gulp.task("clean", clean);
-gulp.task("serveTest", serveTest);
-//TODO ensure linting is happening
-//TODO
+gulp.task('serve', serve);
+gulp.task('clean', clean);
+// TODO ensure linting is happening
 // gulp.task('deployStyles', exportStyles);
 // gulp.task('deployScripts', exportScripts);
 gulp.task('default', gulp.series(tasks));

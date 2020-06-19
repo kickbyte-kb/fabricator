@@ -1,3 +1,15 @@
+@import '_variables';
+@import 'imports';
+
 .test-no-import {
-    background-color: pink;
+    background-color: $var1;
 }
+
+/**
+ * Toolkit styles
+ */
+
+ body {
+    font-family: Arial, sans-serif;
+  }
+  

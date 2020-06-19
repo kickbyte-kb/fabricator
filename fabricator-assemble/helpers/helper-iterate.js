@@ -1,5 +1,4 @@
-var Handlebars = require('handlebars');
-
+const Handlebars = require('handlebars');
 
 /**
  * Block iteration
@@ -9,14 +8,15 @@ var Handlebars = require('handlebars');
  *   <li>List Item {{@index}}</li>
  * {{/iterate}}
  */
-module.exports = function (n, block) {
-	var accum = '', data;
-	for (var i = 0; i < n; ++i) {
+module.exports = function(n, block) {
+	let accum = '';
+	let data;
+	for (let i = 0; i < n; ++i) {
 		if (block.data) {
 			data = Handlebars.createFrame(block.data || {});
 			data.index = i;
 		}
-		accum += block.fn(i, {data: data});
+		accum += block.fn(i, { data });
 	}
 	return accum;
 };
