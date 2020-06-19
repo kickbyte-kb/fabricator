@@ -1,7 +1,7 @@
 {
   "name": "fabricator",
   "version": "2.0.2",
-  "description": "A tool for building website UI toolkits",
+  "description": "A tool for building website UI projects",
   "license": "MIT",
   "homepage": "http://fbrctr.github.io/",
   "scripts": {
@@ -10,7 +10,10 @@
     "start": "gulp --dev",
     "test": "eslint --fix . && npm run build",
     "lint": "eslint .",
-    "lintfix": "eslint --fix ."
+    "lintfix": "eslint --fix .",
+    "make": "gulp make",
+    "approve": "gulp approve",
+    "removeFolder": "gulp rmFolder"
   },
   "browserslist": [
     "ie 11",
@@ -22,7 +25,7 @@
     "ChromeAndroid >= 70"
   ],
   "keywords": [
-    "toolkit",
+    "project",
     "styleguide",
     "framework",
     "scaffold",
@@ -59,6 +62,7 @@
     "gulp-imagemin": "^5.0.3",
     "gulp-rename": "^1.4.0",
     "gulp-sass": "^4.0.2",
+    "gulp-scss-lint": "^1.0.0",
     "gulp-sourcemaps": "^2.6.4",
     "minimist": "^1.2.0",
     "node-sass": "^4.12.0",

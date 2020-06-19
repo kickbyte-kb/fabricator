@@ -124,7 +124,7 @@ Pages to pass through the assembler to be templated. Fabricator pages are stored
 Type: `String` or `Array`  
 Default: `src/materials/**/*`
 
-Files to use a partials/helpers. These are the materials that make up your toolkit. by default, Fabricator comes with "components" and "structures", but you can define your own taxonomy.
+Files to use a partials/helpers. These are the materials that make up your project. by default, Fabricator comes with "components" and "structures", but you can define your own taxonomy.
 
 ### options.data
 
@@ -138,7 +138,7 @@ JSON or YAML files to use as data for views.
 Type: `String` or `Array`  
 Default: `src/docs/**/*.md`
 
-Markdown files containing toolkit-wide documentation
+Markdown files containing project-wide documentation
 
 ### options.keys
 
@@ -384,6 +384,6 @@ The data within each file can be accessed using dot notation:
 
 #### Docs
 
-Docs are just a generic way to capture toolkit documenation that's not specific to a material. This could be something like JavaScript architecture, accessibility guidelines, etc.
+Docs are just a generic way to capture project documenation that's not specific to a material. This could be something like JavaScript architecture, accessibility guidelines, etc.
 
 Docs are written in markdown and are stored in `src/docs` by default.

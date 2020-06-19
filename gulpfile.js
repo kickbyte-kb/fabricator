@@ -142,7 +142,6 @@ const config = {
       `src/section/**/*.{${ext}}`,
       `src/dynamic/**/*.{${ext}}`]
   },
-  styles
   dest: 'dist',
 };
 

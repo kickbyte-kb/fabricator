@@ -67,7 +67,7 @@ const defaults = {
 	buildData: {},
 
 	/**
-	 * Markdown files containing toolkit-wide documentation
+	 * Markdown files containing project-wide documentation
 	 * @type {(String|Array)}
 	 */
 	docs: ['src/docs/**/*.md'],

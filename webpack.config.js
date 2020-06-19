@@ -35,7 +35,7 @@ module.exports = ({
   dev,
   scripts: {
     fabricator: { src: fabSrc },
-    toolkit: { src: scriptSrc },
+    project: { src: scriptSrc },
   },
   dest,
 }) => {
